@@ -20,3 +20,16 @@ body {
     left: 0;
     outline: none;
 }
+
+.attribution {
+    position: absolute;
+    bottom: 5px;
+    right: 0;
+    width: 300px;
+    color: #FFFFFF;
+}
+
+.attribution a {
+    color: #FFFFFF;
+    text-decoration: none;
+}
