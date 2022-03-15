@@ -18,7 +18,7 @@ const size = {
     height: window.innerHeight,
 };
 const gui = new dat.GUI();
-// gui.hide();
+gui.hide();
 const parameters = {
     fogColor: '#262837',
     pedestal: {
