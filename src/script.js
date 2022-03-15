@@ -1,5 +1,5 @@
 import './style.css';
-import { AmbientLight, CylinderGeometry, Fog, Group, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PerspectiveCamera, Scene, PointLight, Vector3, WebGLRenderer, Clock, LoadingManager } from 'three';
+import { AmbientLight, CylinderGeometry, Fog, Group, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PerspectiveCamera, Scene, PointLight, Vector3, WebGLRenderer, LoadingManager } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import gsap from "gsap";
@@ -11,6 +11,7 @@ let timer;
 
 const narration = new Audio('/sounds/narration.mpeg');
 let hasPlayed = false;
+let hasLoaded = false;
 
 const size = {
     width: window.innerWidth,
@@ -37,6 +38,14 @@ const parameters = {
 const canvas = document.querySelector('canvas.webgl');
 const progressBar = document.querySelector('div.progressbar');
 const description = document.querySelector('div.description');
+const info = document.querySelector('div#info-icon');
+info.addEventListener('click', () => {
+    description.style.display = 'block';
+});
+const close = document.querySelector('.description svg');
+close.addEventListener('click', () => {
+    description.style.display = 'none';
+});
 
 const scene = new Scene();
 
@@ -106,9 +115,7 @@ pointLight.lookAt(new Vector3(0, 0, 0));
 
 const loadingManager = new LoadingManager(() => {
 }, (_, loaded, total) => {
-    console.log(loaded, total);
     const loadedPer = (loaded / total) * 100;
-    console.log(loadedPer);
     progressBar.setAttribute('style', `--value: ${loadedPer}`);
     progressBar.setAttribute('aria-valuenow', loadedPer);
 });
@@ -117,7 +124,6 @@ const gltfLoader = new GLTFLoader(loadingManager);
 
 gltfLoader.load('/models/recon/scene.gltf', (gltf) => {
     document.body.removeChild(document.querySelector('div.progressbar-container'));
-    description.style.display = 'block';
     productModel = gltf.scene.children[0];
     productModel.scale.set(0.1, 0.1, 0.1);
     productModel.position.y = parameters.productPositionY;
@@ -134,6 +140,7 @@ gltfLoader.load('/models/recon/scene.gltf', (gltf) => {
         z: 5.8,
         duration: 2,
     });
+    hasLoaded = true;
 });
 
 const renderer = new WebGLRenderer({
@@ -159,7 +166,7 @@ window.addEventListener('resize', () => {
 });
 
 controls.addEventListener('start', () => {
-    if (!hasPlayed) {
+    if (!hasPlayed & hasLoaded) {
         narration.play();
         hasPlayed = true;
     }
@@ -177,13 +184,10 @@ controls.addEventListener('end', () => {
     canvas.style.cursor = 'default';
 });
 
-const clock = new Clock();
-
 const tick = () => {
-    const elapsedTime = clock.getElapsedTime();
 
     if (productModel && !isControlled) {
-        productModel.rotation.z += elapsedTime * 0.0006;
+        productModel.rotation.z += 0.025;
     }
 
     controls.update();

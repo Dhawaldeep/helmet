@@ -97,6 +97,7 @@ body {
 .description {
     display: none;
     position: absolute;
+    top: 10px;
     left: 10px;
     width: 200px;
     box-shadow: 2px 2px 20px #262837;
@@ -107,9 +108,18 @@ body {
     color: white;
 }
 
-@media only screen and (max-width: 768px) {
-    .description {
-        bottom: 10px;
-        width: 80%;
-    }
+svg {
+    cursor: pointer;
+}
+
+.description svg {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
+
+#info-icon {
+    position: absolute;
+    left: 10px;
+    top: 10px;
 }
