@@ -87,7 +87,7 @@ body {
 }
 
 [role="progressbar"]::after {
-    counter-reset: percentage var(--value);
+    /* counter-reset: percentage var(--value); */
     /* content: counter(percentage) "%"; */
     font-family: Helvetica, Arial, sans-serif;
     font-size: calc(var(--size) / 5);
