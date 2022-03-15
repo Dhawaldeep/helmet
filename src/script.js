@@ -187,7 +187,7 @@ controls.addEventListener('end', () => {
 const tick = () => {
 
     if (productModel && !isControlled) {
-        productModel.rotation.z += 0.025;
+        productModel.rotation.z += 0.01;
     }
 
     controls.update();
