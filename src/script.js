@@ -18,19 +18,19 @@ const size = {
     height: window.innerHeight,
 };
 const gui = new dat.GUI();
-gui.hide();
+// gui.hide();
 const parameters = {
     fogColor: '#262837',
     pedestal: {
         color: '#0b080c',
     },
     fogColor: '#21222c',
-    productPositionY: 0.5,
+    productPositionY: -2,
     ambientLight: {
-        intensity: 3,
+        intensity: 6,
     },
     pointLight: {
-        intensity: 4.5,
+        intensity: 5,
     },
     animationTimeSec: 20 * 1000,
 }
@@ -89,7 +89,7 @@ gui.add(parameters.pointLight, 'intensity').name('Point Light').min(0.1).max(6).
 });
 
 const pedestal = new Group();
-scene.add(pedestal);
+// scene.add(pedestal);
 const pedestalMat = new MeshStandardMaterial({ color: parameters.pedestal.color });
 gui.addColor(parameters.pedestal, 'color').name('Pedestal Color')
     .onChange(() => {
@@ -122,13 +122,15 @@ const loadingManager = new LoadingManager(() => {
 
 const gltfLoader = new GLTFLoader(loadingManager);
 
-gltfLoader.load('/models/recon/scene.gltf', (gltf) => {
+gltfLoader.load('/models/Helmet_04.glb', (gltf) => {
     document.body.removeChild(document.querySelector('div.progressbar-container'));
-    productModel = gltf.scene.children[0];
-    productModel.scale.set(0.1, 0.1, 0.1);
+    productModel = gltf.scene;
+    console.log(gltf);
+    productModel.scale.set(0.25, 0.25, 0.25);
+    // productModel.scale.set(0.1, 0.1, 0.1);
     productModel.position.y = parameters.productPositionY;
     gui.add(parameters, 'productPositionY').name('Product Position')
-        .min(2).max(20).step(0.1)
+        .min(-20).max(20).step(0.1)
         .onChange(() => {
             productModel.position.y = parameters.productPositionY;
         })
@@ -136,8 +138,8 @@ gltfLoader.load('/models/recon/scene.gltf', (gltf) => {
     productModel.castShadow = true;
 
     gsap.to(camera.position, {
-        y: 3.6,
-        z: 5.8,
+        y: 1.5,
+        z: 2.4,
         duration: 2,
     });
     hasLoaded = true;
@@ -185,10 +187,11 @@ controls.addEventListener('end', () => {
 });
 
 const tick = () => {
-
     if (productModel && !isControlled) {
-        productModel.rotation.z += 0.01;
+        productModel.children[1].rotation.y += 0.01;
     }
+
+    console.log(camera.position.toArray(),toString())
 
     controls.update();
     renderer.render(scene, camera);
