@@ -9,6 +9,9 @@ let productModel;
 let isControlled = false;
 let timer;
 
+const narration = new Audio('/sounds/narration.mpeg');
+let hasPlayed = false;
+
 const size = {
     width: window.innerWidth,
     height: window.innerHeight,
@@ -26,12 +29,14 @@ const parameters = {
         intensity: 3,
     },
     pointLight: {
-        intensity: 3,
+        intensity: 4.5,
     },
     animationTimeSec: 20 * 1000,
 }
 
 const canvas = document.querySelector('canvas.webgl');
+const progressBar = document.querySelector('div.progressbar');
+const description = document.querySelector('div.description');
 
 const scene = new Scene();
 
@@ -62,8 +67,12 @@ pointLight.position.set(2, 3, 0);
 scene.add(pointLight);
 pointLight.castShadow = true;
 const pointLightB = pointLight.clone();
-pointLight.position.set(- 2, 3, 0);
+pointLightB.position.set(- 2, 3, 0);
 scene.add(pointLightB);
+pointLightB.castShadow = true;
+const pointLightC = pointLight.clone();
+pointLightC.position.set(0, 3, 0);
+scene.add(pointLightC);
 pointLightB.castShadow = true;
 gui.add(parameters.pointLight, 'intensity').name('Point Light').min(0.1).max(6).step(0.01).onChange(() => {
     pointLight.intensity = parameters.pointLight.intensity;
@@ -97,12 +106,18 @@ pointLight.lookAt(new Vector3(0, 0, 0));
 
 const loadingManager = new LoadingManager(() => {
 }, (_, loaded, total) => {
-    console.log((loaded / total) * 100);
+    console.log(loaded, total);
+    const loadedPer = (loaded / total) * 100;
+    console.log(loadedPer);
+    progressBar.setAttribute('style', `--value: ${loadedPer}`);
+    progressBar.setAttribute('aria-valuenow', loadedPer);
 });
 
 const gltfLoader = new GLTFLoader(loadingManager);
 
 gltfLoader.load('/models/recon/scene.gltf', (gltf) => {
+    document.body.removeChild(document.querySelector('div.progressbar-container'));
+    description.style.display = 'block';
     productModel = gltf.scene.children[0];
     productModel.scale.set(0.1, 0.1, 0.1);
     productModel.position.y = parameters.productPositionY;
@@ -144,6 +159,10 @@ window.addEventListener('resize', () => {
 });
 
 controls.addEventListener('start', () => {
+    if (!hasPlayed) {
+        narration.play();
+        hasPlayed = true;
+    }
     isControlled = true;
     canvas.style.cursor = 'grab';
 });
