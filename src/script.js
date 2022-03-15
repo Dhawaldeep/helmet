@@ -1,5 +1,5 @@
 import './style.css';
-import { AmbientLight, CylinderGeometry, Fog, Group, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PerspectiveCamera, Scene, PointLight, Vector3, WebGLRenderer, LoadingManager } from 'three';
+import { AmbientLight, CylinderGeometry, Fog, Group, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PerspectiveCamera, Scene, PointLight, Vector3, WebGLRenderer, LoadingManager, DirectionalLight } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import gsap from "gsap";
@@ -27,10 +27,13 @@ const parameters = {
     fogColor: '#21222c',
     productPositionY: -2,
     ambientLight: {
-        intensity: 6,
+        intensity: 1,
     },
     pointLight: {
         intensity: 5,
+    },
+    directionLight: {
+        intensity: 6,
     },
     animationTimeSec: 20 * 1000,
 }
@@ -61,32 +64,37 @@ const camera = new PerspectiveCamera(75, size.width / size.height, 0.01, 100);
 camera.position.set(0, 3, 20);
 scene.add(camera);
 
-
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
-controls.enablePan = false;
+// controls.enablePan = false;
 
 const ambientLight = new AmbientLight('#ffffff', parameters.ambientLight.intensity);
 scene.add(ambientLight);
 gui.add(parameters.ambientLight, 'intensity').name('Ambient Light').min(0.1).max(6).step(0.01).onChange(() => {
     ambientLight.intensity = parameters.ambientLight.intensity;
 })
-const pointLight = new PointLight('#ffffff', parameters.pointLight.intensity);
-pointLight.position.set(2, 3, 0);
-scene.add(pointLight);
-pointLight.castShadow = true;
-const pointLightB = pointLight.clone();
-pointLightB.position.set(- 2, 3, 0);
-scene.add(pointLightB);
-pointLightB.castShadow = true;
-const pointLightC = pointLight.clone();
-pointLightC.position.set(0, 3, 0);
-scene.add(pointLightC);
-pointLightB.castShadow = true;
-gui.add(parameters.pointLight, 'intensity').name('Point Light').min(0.1).max(6).step(0.01).onChange(() => {
-    pointLight.intensity = parameters.pointLight.intensity;
-    pointLightB.intensity = parameters.pointLight.intensity;
+const directionLight = new DirectionalLight('#fffff', parameters.directionLight.intensity);
+scene.add(directionLight);
+directionLight.position.set(0, 2, 0);
+gui.add(parameters.directionLight, 'intensity').name('Direction Light').min(0.1).max(6).step(0.01).onChange(() => {
+    directionLight.intensity = parameters.directionLight.intensity;
 });
+// const pointLight = new PointLight('#ffffff', parameters.pointLight.intensity);
+// pointLight.position.set(2, 3, 0);
+// scene.add(pointLight);
+// pointLight.castShadow = true;
+// const pointLightB = pointLight.clone();
+// pointLightB.position.set(- 2, 3, 0);
+// scene.add(pointLightB);
+// pointLightB.castShadow = true;
+// const pointLightC = pointLight.clone();
+// pointLightC.position.set(0, 3, 0);
+// scene.add(pointLightC);
+// pointLightB.castShadow = true;
+// gui.add(parameters.pointLight, 'intensity').name('Point Light').min(0.1).max(6).step(0.01).onChange(() => {
+//     pointLight.intensity = parameters.pointLight.intensity;
+//     pointLightB.intensity = parameters.pointLight.intensity;
+// });
 
 const pedestal = new Group();
 // scene.add(pedestal);
@@ -111,7 +119,7 @@ cylinderT.receiveShadow = true;
 cylinderT.castShadow = true;
 pedestal.add(cylinderT);
 pedestal.receiveShadow = true;
-pointLight.lookAt(new Vector3(0, 0, 0));
+// pointLight.lookAt(new Vector3(0, 0, 0));
 
 const loadingManager = new LoadingManager(() => {
 }, (_, loaded, total) => {
@@ -125,10 +133,10 @@ const gltfLoader = new GLTFLoader(loadingManager);
 gltfLoader.load('/models/Helmet_04.glb', (gltf) => {
     document.body.removeChild(document.querySelector('div.progressbar-container'));
     productModel = gltf.scene;
-    console.log(gltf);
     productModel.scale.set(0.25, 0.25, 0.25);
     // productModel.scale.set(0.1, 0.1, 0.1);
     productModel.position.y = parameters.productPositionY;
+    camera.lookAt(productModel.children[1].position);
     gui.add(parameters, 'productPositionY').name('Product Position')
         .min(-20).max(20).step(0.1)
         .onChange(() => {
@@ -138,8 +146,9 @@ gltfLoader.load('/models/Helmet_04.glb', (gltf) => {
     productModel.castShadow = true;
 
     gsap.to(camera.position, {
-        y: 1.5,
-        z: 2.4,
+        x: -0.35,
+        y: 1,
+        z: 2.5,
         duration: 2,
     });
     hasLoaded = true;
@@ -191,7 +200,6 @@ const tick = () => {
         productModel.children[1].rotation.y += 0.01;
     }
 
-    console.log(camera.position.toArray(),toString())
 
     controls.update();
     renderer.render(scene, camera);
