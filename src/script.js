@@ -1,11 +1,13 @@
 import './style.css';
-import { AmbientLight, CylinderGeometry, Fog, Group, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PerspectiveCamera, Scene, PointLight, Vector3, WebGLRenderer, LoadingManager, DirectionalLight } from 'three';
+import { AmbientLight, CylinderGeometry, Fog, Group, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PerspectiveCamera, Scene, PointLight, Vector3, WebGLRenderer, LoadingManager, DirectionalLight, RectAreaLight, DirectionalLightHelper } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHelper.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import gsap from "gsap";
 import * as dat from 'lil-gui';
 
 let productModel;
+let glassCase;
 let isControlled = false;
 let timer;
 
@@ -25,15 +27,18 @@ const parameters = {
         color: '#0b080c',
     },
     fogColor: '#21222c',
-    productPositionY: -2,
+    productPositionY: -7,
     ambientLight: {
-        intensity: 1,
+        intensity: 15,
     },
     pointLight: {
         intensity: 5,
     },
     directionLight: {
-        intensity: 6,
+        intensity: 20,
+    },
+    rALight: {
+        helperVisible: true,
     },
     animationTimeSec: 20 * 1000,
 }
@@ -51,34 +56,39 @@ close.addEventListener('click', () => {
 });
 
 const scene = new Scene();
+const productGroup = new Group();
+scene.add(productGroup);
 
-const fog = new Fog(parameters.fogColor, 1, 20);
-gui.addColor(parameters, 'fogColor').name('Fog Color').
-    onChange(() => {
-        fog.color.set(parameters.fogColor);
-        document.body.style.backgroundColor = parameters.fogColor;
-    })
-scene.fog = fog;
+// const fog = new Fog(parameters.fogColor, 1, 40);
+// gui.addColor(parameters, 'fogColor')
+//     .name('Fog Color')
+//     .onChange(() => {
+//         fog.color.set(parameters.fogColor);
+//         document.body.style.backgroundColor = parameters.fogColor;
+//     })
+// scene.fog = fog;
 
 const camera = new PerspectiveCamera(75, size.width / size.height, 0.01, 100);
-camera.position.set(0, 3, 20);
+camera.position.set(0, 10, 30);
 scene.add(camera);
 
 const controls = new OrbitControls(camera, canvas);
 controls.enableDamping = true;
-// controls.enablePan = false;
+controls.enablePan = false;
 
 const ambientLight = new AmbientLight('#ffffff', parameters.ambientLight.intensity);
 scene.add(ambientLight);
-gui.add(parameters.ambientLight, 'intensity').name('Ambient Light').min(0.1).max(6).step(0.01).onChange(() => {
+gui.add(parameters.ambientLight, 'intensity').name('Ambient Light').min(0.1).max(20).step(0.01).onChange(() => {
     ambientLight.intensity = parameters.ambientLight.intensity;
 })
 const directionLight = new DirectionalLight('#fffff', parameters.directionLight.intensity);
 scene.add(directionLight);
-directionLight.position.set(0, 2, 0);
-gui.add(parameters.directionLight, 'intensity').name('Direction Light').min(0.1).max(6).step(0.01).onChange(() => {
+directionLight.position.set(0, 10, 0);
+gui.add(parameters.directionLight, 'intensity').name('Direction Light').min(0.1).max(20).step(0.01).onChange(() => {
     directionLight.intensity = parameters.directionLight.intensity;
 });
+// const directionalLightHelper = new DirectionalLightHelper(directionLight, 2);
+// scene.add(directionalLightHelper);
 // const pointLight = new PointLight('#ffffff', parameters.pointLight.intensity);
 // pointLight.position.set(2, 3, 0);
 // scene.add(pointLight);
@@ -96,29 +106,29 @@ gui.add(parameters.directionLight, 'intensity').name('Direction Light').min(0.1)
 //     pointLightB.intensity = parameters.pointLight.intensity;
 // });
 
-const pedestal = new Group();
-// scene.add(pedestal);
-const pedestalMat = new MeshStandardMaterial({ color: parameters.pedestal.color });
-gui.addColor(parameters.pedestal, 'color').name('Pedestal Color')
-    .onChange(() => {
-        pedestalMat.color.set(parameters.pedestal.color);
-    });
+// const pedestal = new Group();
+// // scene.add(pedestal);
+// const pedestalMat = new MeshStandardMaterial({ color: parameters.pedestal.color });
+// gui.addColor(parameters.pedestal, 'color').name('Pedestal Color')
+//     .onChange(() => {
+//         pedestalMat.color.set(parameters.pedestal.color);
+//     });
 
-const cylinderB = new Mesh(
-    new CylinderGeometry(3, 3, 0.2, 50),
-    pedestalMat,
-);
-pedestal.add(cylinderB);
-cylinderB.receiveShadow = true;
-const cylinderT = new Mesh(
-    new CylinderGeometry(2.5, 2.5, 0.2, 50),
-    pedestalMat,
-);
-cylinderT.position.y = 0.2;
-cylinderT.receiveShadow = true;
-cylinderT.castShadow = true;
-pedestal.add(cylinderT);
-pedestal.receiveShadow = true;
+// const cylinderB = new Mesh(
+//     new CylinderGeometry(3, 3, 0.2, 50),
+//     pedestalMat,
+// );
+// pedestal.add(cylinderB);
+// cylinderB.receiveShadow = true;
+// const cylinderT = new Mesh(
+//     new CylinderGeometry(2.5, 2.5, 0.2, 50),
+//     pedestalMat,
+// );
+// cylinderT.position.y = 0.2;
+// cylinderT.receiveShadow = true;
+// cylinderT.castShadow = true;
+// pedestal.add(cylinderT);
+// pedestal.receiveShadow = true;
 // pointLight.lookAt(new Vector3(0, 0, 0));
 
 const loadingManager = new LoadingManager(() => {
@@ -130,9 +140,9 @@ const loadingManager = new LoadingManager(() => {
 
 const gltfLoader = new GLTFLoader(loadingManager);
 
-gltfLoader.load('/models/Helmet_04.glb', (gltf) => {
+gltfLoader.load('/models/helmet-editor.glb', (gltf) => {
     document.body.removeChild(document.querySelector('div.progressbar-container'));
-    productModel = gltf.scene;
+    productModel = gltf.scene.children[0].children[0];
     productModel.scale.set(0.25, 0.25, 0.25);
     // productModel.scale.set(0.1, 0.1, 0.1);
     productModel.position.y = parameters.productPositionY;
@@ -142,17 +152,25 @@ gltfLoader.load('/models/Helmet_04.glb', (gltf) => {
         .onChange(() => {
             productModel.position.y = parameters.productPositionY;
         })
-    scene.add(productModel);
+    productGroup.add(productModel);
     productModel.castShadow = true;
 
-    gsap.to(camera.position, {
-        x: -0.35,
-        y: 1,
-        z: 2.5,
-        duration: 2,
-    });
+    // gsap.to(camera.position, {
+    //     x: -0.35,
+    //     y: 1,
+    //     z: 2.5,
+    //     duration: 2,
+    // });
     hasLoaded = true;
 });
+
+gltfLoader.load('/models/Glasscase.glb', (gltf) => {
+    console.log(gltf);
+    glassCase = gltf.scene;
+    productGroup.add(glassCase);
+    glassCase.scale.set(10, 10, 10);
+    glassCase.position.y = -7;
+})
 
 const renderer = new WebGLRenderer({
     canvas,
@@ -197,9 +215,8 @@ controls.addEventListener('end', () => {
 
 const tick = () => {
     if (productModel && !isControlled) {
-        productModel.children[1].rotation.y += 0.01;
+        productGroup.rotation.y += 0.01;
     }
-
 
     controls.update();
     renderer.render(scene, camera);
