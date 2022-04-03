@@ -1,5 +1,5 @@
 import './style.css';
-import { AmbientLight, CylinderGeometry, Fog, Group, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PerspectiveCamera, Scene, PointLight, Vector3, WebGLRenderer, LoadingManager, DirectionalLight, RectAreaLight, DirectionalLightHelper } from 'three';
+import { AmbientLight, CylinderGeometry, Fog, Group, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PerspectiveCamera, Scene, PointLight, Vector3, WebGLRenderer, LoadingManager, DirectionalLight, RectAreaLight, DirectionalLightHelper, CubeTextureLoader } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHelper.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
@@ -20,7 +20,7 @@ const size = {
     height: window.innerHeight,
 };
 const gui = new dat.GUI();
-gui.hide();
+// gui.hide();
 const parameters = {
     fogColor: '#262837',
     pedestal: {
@@ -41,6 +41,7 @@ const parameters = {
         helperVisible: true,
     },
     animationTimeSec: 20 * 1000,
+    environmentMapIntensity: 10,
 }
 
 const canvas = document.querySelector('canvas.webgl');
@@ -55,10 +56,77 @@ close.addEventListener('click', () => {
     description.style.display = 'none';
 });
 
+const cubeTextureLoader = new CubeTextureLoader()
+
+const environmentMapTexture = cubeTextureLoader.load([
+    '/textures/BG01/px.png',
+    '/textures/BG01/nx.png',
+    '/textures/BG01/py.png',
+    '/textures/BG01/ny.png',
+    '/textures/BG01/pz.png',
+    '/textures/BG01/nz.png'
+]);
+
+const environmentMapTexture02 = cubeTextureLoader.load([
+    '/textures/BG02/px.png',
+    '/textures/BG02/nx.png',
+    '/textures/BG02/py.png',
+    '/textures/BG02/ny.png',
+    '/textures/BG02/pz.png',
+    '/textures/BG02/nz.png'
+]);
+const environmentMapTexture03 = cubeTextureLoader.load([
+    '/textures/BG03/px.png',
+    '/textures/BG03/nx.png',
+    '/textures/BG03/py.png',
+    '/textures/BG03/ny.png',
+    '/textures/BG03/pz.png',
+    '/textures/BG03/nz.png'
+]);
+const environmentMapTexture04 = cubeTextureLoader.load([
+    '/textures/BG04/px.png',
+    '/textures/BG04/nx.png',
+    '/textures/BG04/py.png',
+    '/textures/BG04/ny.png',
+    '/textures/BG04/pz.png',
+    '/textures/BG04/nz.png'
+]);
+const environmentMapTextureVS = cubeTextureLoader.load([
+    '/textures/venice_sunset/px.png',
+    '/textures/venice_sunset/nx.png',
+    '/textures/venice_sunset/py.png',
+    '/textures/venice_sunset/ny.png',
+    '/textures/venice_sunset/pz.png',
+    '/textures/venice_sunset/nz.png'
+]);
+
+parameters['Env Map Texture'] = environmentMapTexture;
+/**
+ * Update glass case material
+ */
+ const updateGlassCaseMaterials = () => {
+     console.log(parameters['Env Map Texture']);
+    glassCase.traverse(child => {
+        if (child instanceof Mesh && child.material instanceof MeshStandardMaterial) {
+            child.material.envMap = parameters['Env Map Texture'];
+            child.material.envMapIntensity = parameters.environmentMapIntensity;
+            child.material.needsUpdate = true;
+        }
+    });
+}
+
+
 const scene = new Scene();
 const productGroup = new Group();
 scene.add(productGroup);
-
+gui.add(parameters, 'environmentMapIntensity').min(0).max(50).step(0.1).onChange(updateGlassCaseMaterials).name('Env Intensity');
+gui.add(parameters, 'Env Map Texture', {
+    BG01: environmentMapTexture,
+    BG02: environmentMapTexture02,
+    BG03: environmentMapTexture03,
+    BG04: environmentMapTexture04,
+    'Venice Sunset': environmentMapTextureVS,
+}).onChange(updateGlassCaseMaterials);
 // const fog = new Fog(parameters.fogColor, 1, 40);
 // gui.addColor(parameters, 'fogColor')
 //     .name('Fog Color')
@@ -78,15 +146,28 @@ controls.enablePan = false;
 
 const ambientLight = new AmbientLight('#ffffff', parameters.ambientLight.intensity);
 scene.add(ambientLight);
-gui.add(parameters.ambientLight, 'intensity').name('Ambient Light').min(0.1).max(20).step(0.01).onChange(() => {
+gui.add(parameters.ambientLight, 'intensity').name('Ambient Light').min(0.1).max(50).step(0.01).onChange(() => {
     ambientLight.intensity = parameters.ambientLight.intensity;
 })
-const directionLight = new DirectionalLight('#fffff', parameters.directionLight.intensity);
+const directionLight = new DirectionalLight('#ffffff', parameters.directionLight.intensity);
 scene.add(directionLight);
 directionLight.position.set(0, 10, 0);
-gui.add(parameters.directionLight, 'intensity').name('Direction Light').min(0.1).max(20).step(0.01).onChange(() => {
+
+// const dLights = [0, 0, 0, 0].map(() => {
+//     return new DirectionalLight('#ffffff', parameters.directionLight.intensity);
+// });
+// dLights[0].position.set(10, 0, 0);
+// dLights[1].position.set(0, 0, -10);
+// dLights[2].position.set(-10, 0, 0);
+// dLights[3].position.set(0, 0, 10);
+// scene.add(...dLights);
+gui.add(parameters.directionLight, 'intensity').name('Direction Light').min(0.1).max(50).step(0.01).onChange(() => {
     directionLight.intensity = parameters.directionLight.intensity;
+    // dLights.forEach(dl => {
+    //     dl.intensity = parameters.directionLight.intensity;
+    // });
 });
+
 // const directionalLightHelper = new DirectionalLightHelper(directionLight, 2);
 // scene.add(directionalLightHelper);
 // const pointLight = new PointLight('#ffffff', parameters.pointLight.intensity);
@@ -170,6 +251,7 @@ gltfLoader.load('/models/Glasscase.glb', (gltf) => {
     productGroup.add(glassCase);
     glassCase.scale.set(10, 10, 10);
     glassCase.position.y = -7;
+    updateGlassCaseMaterials();
 })
 
 const renderer = new WebGLRenderer({
