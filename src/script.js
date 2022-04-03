@@ -105,6 +105,7 @@ parameters['Env Map Texture'] = environmentMapTexture;
  * Update glass case material
  */
  const updateGlassCaseMaterials = () => {
+     scene.background = parameters['Env Map Texture'];
      console.log(parameters['Env Map Texture']);
     glassCase.traverse(child => {
         if (child instanceof Mesh && child.material instanceof MeshStandardMaterial) {
