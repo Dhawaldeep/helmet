@@ -58,6 +58,15 @@ close.addEventListener('click', () => {
 
 const cubeTextureLoader = new CubeTextureLoader()
 
+const environmentMapTextureBlur = cubeTextureLoader.load([
+    '/textures/BG01_blurred/px.png',
+    '/textures/BG01_blurred/nx.png',
+    '/textures/BG01_blurred/py.png',
+    '/textures/BG01_blurred/ny.png',
+    '/textures/BG01_blurred/pz.png',
+    '/textures/BG01_blurred/nz.png'
+]);
+
 const environmentMapTexture = cubeTextureLoader.load([
     '/textures/BG01/px.png',
     '/textures/BG01/nx.png',
@@ -105,7 +114,7 @@ parameters['Env Map Texture'] = environmentMapTexture;
  * Update glass case material
  */
  const updateGlassCaseMaterials = () => {
-     scene.background = parameters['Env Map Texture'];
+    //  scene.background = parameters['Env Map Texture'];
      console.log(parameters['Env Map Texture']);
     glassCase.traverse(child => {
         if (child instanceof Mesh && child.material instanceof MeshStandardMaterial) {
@@ -118,6 +127,7 @@ parameters['Env Map Texture'] = environmentMapTexture;
 
 
 const scene = new Scene();
+scene.background = environmentMapTextureBlur;
 const productGroup = new Group();
 scene.add(productGroup);
 gui.add(parameters, 'environmentMapIntensity').min(0).max(50).step(0.1).onChange(updateGlassCaseMaterials).name('Env Intensity');
