@@ -28,16 +28,16 @@ const parameters = {
     fogColor: '#21222c',
     productPositionY: -7,
     ambientLight: {
-        intensity: 15,
+        intensity: 1,
     },
     pointLight: {
         intensity: 5,
     },
     spotLight: {
-        intensity: 5,
+        intensity: 25,
     },
     directionLight: {
-        intensity: 20,
+        intensity: 1,
     },
     rALight: {
         intensity: 5,
