@@ -1,13 +1,12 @@
 import './style.css';
-import { AmbientLight, CylinderGeometry, Fog, Group, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PerspectiveCamera, Scene, PointLight, Vector3, WebGLRenderer, LoadingManager, DirectionalLight, RectAreaLight, DirectionalLightHelper, CubeTextureLoader } from 'three';
+import { AmbientLight, CylinderGeometry, Fog, Group, Mesh, MeshStandardMaterial, PCFSoftShadowMap, PerspectiveCamera, Scene, PointLight, Vector3, WebGLRenderer, LoadingManager, DirectionalLight, RectAreaLight, DirectionalLightHelper, CubeTextureLoader, TextureLoader, SpotLight, sRGBEncoding } from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import { RectAreaLightHelper } from 'three/examples/jsm/helpers/RectAreaLightHelper.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import gsap from "gsap";
 import * as dat from 'lil-gui';
 
-let productModel;
-let glassCase;
+let model;
 let isControlled = false;
 let timer;
 
@@ -34,10 +33,14 @@ const parameters = {
     pointLight: {
         intensity: 5,
     },
+    spotLight: {
+        intensity: 5,
+    },
     directionLight: {
         intensity: 20,
     },
     rALight: {
+        intensity: 5,
         helperVisible: true,
     },
     animationTimeSec: 20 * 1000,
@@ -56,88 +59,20 @@ close.addEventListener('click', () => {
     description.style.display = 'none';
 });
 
-const cubeTextureLoader = new CubeTextureLoader()
+const textureLoader = new TextureLoader();
 
-const environmentMapTextureBlur = cubeTextureLoader.load([
-    '/textures/BG01_blurred/px.png',
-    '/textures/BG01_blurred/nx.png',
-    '/textures/BG01_blurred/py.png',
-    '/textures/BG01_blurred/ny.png',
-    '/textures/BG01_blurred/pz.png',
-    '/textures/BG01_blurred/nz.png'
-]);
-
-const environmentMapTexture = cubeTextureLoader.load([
-    '/textures/BG01/px.png',
-    '/textures/BG01/nx.png',
-    '/textures/BG01/py.png',
-    '/textures/BG01/ny.png',
-    '/textures/BG01/pz.png',
-    '/textures/BG01/nz.png'
-]);
-
-const environmentMapTexture02 = cubeTextureLoader.load([
-    '/textures/BG02/px.png',
-    '/textures/BG02/nx.png',
-    '/textures/BG02/py.png',
-    '/textures/BG02/ny.png',
-    '/textures/BG02/pz.png',
-    '/textures/BG02/nz.png'
-]);
-const environmentMapTexture03 = cubeTextureLoader.load([
-    '/textures/BG03/px.png',
-    '/textures/BG03/nx.png',
-    '/textures/BG03/py.png',
-    '/textures/BG03/ny.png',
-    '/textures/BG03/pz.png',
-    '/textures/BG03/nz.png'
-]);
-const environmentMapTexture04 = cubeTextureLoader.load([
-    '/textures/BG04/px.png',
-    '/textures/BG04/nx.png',
-    '/textures/BG04/py.png',
-    '/textures/BG04/ny.png',
-    '/textures/BG04/pz.png',
-    '/textures/BG04/nz.png'
-]);
-const environmentMapTextureVS = cubeTextureLoader.load([
-    '/textures/venice_sunset/px.png',
-    '/textures/venice_sunset/nx.png',
-    '/textures/venice_sunset/py.png',
-    '/textures/venice_sunset/ny.png',
-    '/textures/venice_sunset/pz.png',
-    '/textures/venice_sunset/nz.png'
-]);
-
-parameters['Env Map Texture'] = environmentMapTexture;
-/**
- * Update glass case material
- */
- const updateGlassCaseMaterials = () => {
-    //  scene.background = parameters['Env Map Texture'];
-     console.log(parameters['Env Map Texture']);
-    glassCase.traverse(child => {
-        if (child instanceof Mesh && child.material instanceof MeshStandardMaterial) {
-            child.material.envMap = parameters['Env Map Texture'];
-            child.material.envMapIntensity = parameters.environmentMapIntensity;
-            child.material.needsUpdate = true;
-        }
-    });
-}
-
+const backgroundTexture = textureLoader.load('/textures/Gray _BG.jpg');
 
 const scene = new Scene();
-scene.background = environmentMapTextureBlur;
-const productGroup = new Group();
-scene.add(productGroup);
-gui.add(parameters, 'environmentMapIntensity').min(0).max(50).step(0.1).onChange(updateGlassCaseMaterials).name('Env Intensity');
-gui.add(parameters, 'Env Map Texture', {
-    BG01: environmentMapTexture,
-    BG02: environmentMapTexture02,
-    BG03: environmentMapTexture03,
-    BG04: environmentMapTexture04,
-    'Venice Sunset': environmentMapTextureVS,
-}).onChange(updateGlassCaseMaterials);
+scene.background = backgroundTexture;
+// gui.add(parameters, 'environmentMapIntensity').min(0).max(50).step(0).onChange(updateGlassCaseMaterials).name('Env Intensity');
+// gui.add(parameters, 'Env Map Texture', {
+//     BG01: environmentMapTexture,
+//     BG02: environmentMapTexture02,
+//     BG03: environmentMapTexture03,
+//     BG04: environmentMapTexture04,
+//     'Venice Sunset': environmentMapTextureVS,
+// }).onChange(updateGlassCaseMaterials);
 // const fog = new Fog(parameters.fogColor, 1, 40);
 // gui.addColor(parameters, 'fogColor')
 //     .name('Fog Color')
@@ -157,28 +92,47 @@ controls.enablePan = false;
 
 const ambientLight = new AmbientLight('#ffffff', parameters.ambientLight.intensity);
 scene.add(ambientLight);
-gui.add(parameters.ambientLight, 'intensity').name('Ambient Light').min(0.1).max(50).step(0.01).onChange(() => {
+gui.add(parameters.ambientLight, 'intensity').name('Ambient Light').min(0).max(50).step(0.01).onChange(() => {
     ambientLight.intensity = parameters.ambientLight.intensity;
 })
-const directionLight = new DirectionalLight('#ffffff', parameters.directionLight.intensity);
-scene.add(directionLight);
-directionLight.position.set(0, 10, 0);
+// const directionLight = new DirectionalLight('#ffffff', parameters.directionLight.intensity);
+// scene.add(directionLight);
+// directionLight.position.set(0, 10, 0);
 
-// const dLights = [0, 0, 0, 0].map(() => {
-//     return new DirectionalLight('#ffffff', parameters.directionLight.intensity);
-// });
-// dLights[0].position.set(10, 0, 0);
-// dLights[1].position.set(0, 0, -10);
-// dLights[2].position.set(-10, 0, 0);
-// dLights[3].position.set(0, 0, 10);
-// scene.add(...dLights);
-gui.add(parameters.directionLight, 'intensity').name('Direction Light').min(0.1).max(50).step(0.01).onChange(() => {
-    directionLight.intensity = parameters.directionLight.intensity;
-    // dLights.forEach(dl => {
-    //     dl.intensity = parameters.directionLight.intensity;
-    // });
+const spotLight = new SpotLight('#ffffff', parameters.spotLight.intensity);
+scene.add(spotLight);
+spotLight.position.set(0, 10, 0);
+
+// const rectAreaLight = new RectAreaLight('#ffffff', parameters.rALight.intensity);
+// scene.add(rectAreaLight);
+// rectAreaLight.position.set(0, 8, 0);
+// rectAreaLight.lookAt(new Vector3());
+
+// const rectAreaLightHelper = new RectAreaLightHelper(rectAreaLight);
+// scene.add(rectAreaLightHelper);
+
+const dLights = [0, 0, 0, 0].map(() => {
+    return new DirectionalLight('#ffffff', parameters.directionLight.intensity);
 });
-
+dLights[0].position.set(10, 5, 0);
+dLights[1].position.set(0, 5, -10);
+dLights[2].position.set(-10, 5, 0);
+dLights[3].position.set(0, 5, 10);
+scene.add(...dLights);
+// const dLightHelpers = [0, 0, 0, 0].map((_, i) => new DirectionalLightHelper(dLights[i], 2))
+gui.add(parameters.directionLight, 'intensity').name('Direction Light').min(0).max(50).step(0.01).onChange(() => {
+    // directionLight.intensity = parameters.directionLight.intensity;
+    dLights.forEach(dl => {
+        dl.intensity = parameters.directionLight.intensity;
+    });
+});
+gui.add(parameters.spotLight, 'intensity').name('Spot Light').min(0).max(100).step(0.01).onChange(() => {
+    spotLight.intensity = parameters.spotLight.intensity;
+});
+// gui.add(parameters.rALight, 'intensity').name('Rect Area Light').min(0).max(100).step(0.01).onChange(() => {
+//     rectAreaLight.intensity = parameters.rALight.intensity;
+// });
+// scene.add(...dLightHelpers);
 // const directionalLightHelper = new DirectionalLightHelper(directionLight, 2);
 // scene.add(directionalLightHelper);
 // const pointLight = new PointLight('#ffffff', parameters.pointLight.intensity);
@@ -193,7 +147,7 @@ gui.add(parameters.directionLight, 'intensity').name('Direction Light').min(0.1)
 // pointLightC.position.set(0, 3, 0);
 // scene.add(pointLightC);
 // pointLightB.castShadow = true;
-// gui.add(parameters.pointLight, 'intensity').name('Point Light').min(0.1).max(6).step(0.01).onChange(() => {
+// gui.add(parameters.pointLight, 'intensity').name('Point Light').min(0).max(6).step(0.01).onChange(() => {
 //     pointLight.intensity = parameters.pointLight.intensity;
 //     pointLightB.intensity = parameters.pointLight.intensity;
 // });
@@ -232,20 +186,27 @@ const loadingManager = new LoadingManager(() => {
 
 const gltfLoader = new GLTFLoader(loadingManager);
 
-gltfLoader.load('/models/helmet-editor.glb', (gltf) => {
+gltfLoader.load('/models/Helmet_Glasscase 01.glb', (gltf) => {
+    console.log(gltf);
+
     document.body.removeChild(document.querySelector('div.progressbar-container'));
-    productModel = gltf.scene.children[0].children[0];
-    productModel.scale.set(0.25, 0.25, 0.25);
+    model = gltf.scene.children[0];
+    scene.add(model);
+    model.scale.set(0.25, 0.25, 0.25);
+    // productModel = gltf.scene.children[0].children[0];
+    // glassCase = gltf.scene.children[0].children[1];
+    // productModel.scale.set(0.25, 0.25, 0.25);
     // productModel.scale.set(0.1, 0.1, 0.1);
-    productModel.position.y = parameters.productPositionY;
-    camera.lookAt(productModel.children[1].position);
-    gui.add(parameters, 'productPositionY').name('Product Position')
-        .min(-20).max(20).step(0.1)
-        .onChange(() => {
-            productModel.position.y = parameters.productPositionY;
-        })
-    productGroup.add(productModel);
-    productModel.castShadow = true;
+    // productModel.position.y = parameters.productPositionY;
+    // camera.lookAt(productModel.children[1].position);
+    // gui.add(parameters, 'productPositionY').name('Product Position')
+    //     .min(-20).max(20).step(0)
+    //     .onChange(() => {
+    //         productModel.position.y = parameters.productPositionY;
+    //     })
+    // productGroup.add(productModel);
+    // productGroup.add(glassCase);
+    // productModel.castShadow = true;
 
     // gsap.to(camera.position, {
     //     x: -0.35,
@@ -256,14 +217,14 @@ gltfLoader.load('/models/helmet-editor.glb', (gltf) => {
     hasLoaded = true;
 });
 
-gltfLoader.load('/models/Glasscase.glb', (gltf) => {
-    console.log(gltf);
-    glassCase = gltf.scene;
-    productGroup.add(glassCase);
-    glassCase.scale.set(10, 10, 10);
-    glassCase.position.y = -7;
-    updateGlassCaseMaterials();
-})
+// gltfLoader.load('/models/Glasscase.glb', (gltf) => {
+//     console.log(gltf);
+//     glassCase = gltf.scene;
+//     productGroup.add(glassCase);
+//     glassCase.scale.set(10, 10, 10);
+//     glassCase.position.y = -7;
+//     updateGlassCaseMaterials();
+// })
 
 const renderer = new WebGLRenderer({
     canvas,
@@ -275,6 +236,7 @@ renderer.shadowMap.type = PCFSoftShadowMap;
 renderer.setSize(size.width, size.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.render(scene, camera);
+renderer.outputEncoding = sRGBEncoding;
 
 window.addEventListener('resize', () => {
     size.width = window.innerWidth;
@@ -307,8 +269,8 @@ controls.addEventListener('end', () => {
 });
 
 const tick = () => {
-    if (productModel && !isControlled) {
-        productGroup.rotation.y += 0.01;
+    if (model && !isControlled) {
+        model.rotation.y += 0.01;
     }
 
     controls.update();
