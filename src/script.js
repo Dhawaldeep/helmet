@@ -59,20 +59,33 @@ close.addEventListener('click', () => {
     description.style.display = 'none';
 });
 
+const updateGlassCaseMaterials = () => {
+    model.traverse(child => {
+        if (child instanceof Mesh && child.material instanceof MeshStandardMaterial) {
+            child.material.envMapIntensity = parameters.environmentMapIntensity;
+            child.material.needsUpdate = true;
+        }
+    });
+}
+
+gui.add(parameters, 'environmentMapIntensity').min(0).max(50).step(0.1).onChange(updateGlassCaseMaterials).name('Env Intensity');
+
 const textureLoader = new TextureLoader();
+const cubeTextureLoader = new CubeTextureLoader();
 
 const backgroundTexture = textureLoader.load('/textures/Gray _BG.jpg');
-
+const environmentMapTextureVS = cubeTextureLoader.load([
+    '/textures/venice_sunset/px.png',
+    '/textures/venice_sunset/nx.png',
+    '/textures/venice_sunset/py.png',
+    '/textures/venice_sunset/ny.png',
+    '/textures/venice_sunset/pz.png',
+    '/textures/venice_sunset/nz.png'
+]);
 const scene = new Scene();
 scene.background = backgroundTexture;
-// gui.add(parameters, 'environmentMapIntensity').min(0).max(50).step(0).onChange(updateGlassCaseMaterials).name('Env Intensity');
-// gui.add(parameters, 'Env Map Texture', {
-//     BG01: environmentMapTexture,
-//     BG02: environmentMapTexture02,
-//     BG03: environmentMapTexture03,
-//     BG04: environmentMapTexture04,
-//     'Venice Sunset': environmentMapTextureVS,
-// }).onChange(updateGlassCaseMaterials);
+scene.environment = environmentMapTextureVS;
+
 // const fog = new Fog(parameters.fogColor, 1, 40);
 // gui.addColor(parameters, 'fogColor')
 //     .name('Fog Color')
@@ -129,53 +142,6 @@ gui.add(parameters.directionLight, 'intensity').name('Direction Light').min(0).m
 gui.add(parameters.spotLight, 'intensity').name('Spot Light').min(0).max(100).step(0.01).onChange(() => {
     spotLight.intensity = parameters.spotLight.intensity;
 });
-// gui.add(parameters.rALight, 'intensity').name('Rect Area Light').min(0).max(100).step(0.01).onChange(() => {
-//     rectAreaLight.intensity = parameters.rALight.intensity;
-// });
-// scene.add(...dLightHelpers);
-// const directionalLightHelper = new DirectionalLightHelper(directionLight, 2);
-// scene.add(directionalLightHelper);
-// const pointLight = new PointLight('#ffffff', parameters.pointLight.intensity);
-// pointLight.position.set(2, 3, 0);
-// scene.add(pointLight);
-// pointLight.castShadow = true;
-// const pointLightB = pointLight.clone();
-// pointLightB.position.set(- 2, 3, 0);
-// scene.add(pointLightB);
-// pointLightB.castShadow = true;
-// const pointLightC = pointLight.clone();
-// pointLightC.position.set(0, 3, 0);
-// scene.add(pointLightC);
-// pointLightB.castShadow = true;
-// gui.add(parameters.pointLight, 'intensity').name('Point Light').min(0).max(6).step(0.01).onChange(() => {
-//     pointLight.intensity = parameters.pointLight.intensity;
-//     pointLightB.intensity = parameters.pointLight.intensity;
-// });
-
-// const pedestal = new Group();
-// // scene.add(pedestal);
-// const pedestalMat = new MeshStandardMaterial({ color: parameters.pedestal.color });
-// gui.addColor(parameters.pedestal, 'color').name('Pedestal Color')
-//     .onChange(() => {
-//         pedestalMat.color.set(parameters.pedestal.color);
-//     });
-
-// const cylinderB = new Mesh(
-//     new CylinderGeometry(3, 3, 0.2, 50),
-//     pedestalMat,
-// );
-// pedestal.add(cylinderB);
-// cylinderB.receiveShadow = true;
-// const cylinderT = new Mesh(
-//     new CylinderGeometry(2.5, 2.5, 0.2, 50),
-//     pedestalMat,
-// );
-// cylinderT.position.y = 0.2;
-// cylinderT.receiveShadow = true;
-// cylinderT.castShadow = true;
-// pedestal.add(cylinderT);
-// pedestal.receiveShadow = true;
-// pointLight.lookAt(new Vector3(0, 0, 0));
 
 const loadingManager = new LoadingManager(() => {
 }, (_, loaded, total) => {
@@ -193,38 +159,9 @@ gltfLoader.load('/models/Helmet_Glasscase 01.glb', (gltf) => {
     model = gltf.scene.children[0];
     scene.add(model);
     model.scale.set(0.25, 0.25, 0.25);
-    // productModel = gltf.scene.children[0].children[0];
-    // glassCase = gltf.scene.children[0].children[1];
-    // productModel.scale.set(0.25, 0.25, 0.25);
-    // productModel.scale.set(0.1, 0.1, 0.1);
-    // productModel.position.y = parameters.productPositionY;
-    // camera.lookAt(productModel.children[1].position);
-    // gui.add(parameters, 'productPositionY').name('Product Position')
-    //     .min(-20).max(20).step(0)
-    //     .onChange(() => {
-    //         productModel.position.y = parameters.productPositionY;
-    //     })
-    // productGroup.add(productModel);
-    // productGroup.add(glassCase);
-    // productModel.castShadow = true;
-
-    // gsap.to(camera.position, {
-    //     x: -0.35,
-    //     y: 1,
-    //     z: 2.5,
-    //     duration: 2,
-    // });
     hasLoaded = true;
+    updateGlassCaseMaterials()
 });
-
-// gltfLoader.load('/models/Glasscase.glb', (gltf) => {
-//     console.log(gltf);
-//     glassCase = gltf.scene;
-//     productGroup.add(glassCase);
-//     glassCase.scale.set(10, 10, 10);
-//     glassCase.position.y = -7;
-//     updateGlassCaseMaterials();
-// })
 
 const renderer = new WebGLRenderer({
     canvas,
